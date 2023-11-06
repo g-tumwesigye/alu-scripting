@@ -1,28 +1,24 @@
 #!/usr/bin/python3
-
-"""A recursive function that queries the Reddit API,
-parses the title of all hot articles,
-and prints a sorted count of given keywords"""
+"""Query for the reddit api and parse the title of all hot articles
+"""
 
 import json
 import requests
 
 
 def count_words(subreddit, word_list, after="", count=[]):
-    """Function to count_words
-    """
 
     if after == "":
         count = [0] * len(word_list)
 
     url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    request = requests.get(url,
-                           params={'after': after},
-                           allow_redirects=False,
-                           headers={'user-agent': 'bhalut'})
+    response = requests.get(url,
+                            params={'after': after},
+                            allow_redirects=False,
+                            headers={'user-agent': 'bhalut'})
 
-    if request.status_code == 200:
-        data = request.json()
+    if response.status_code == 200:
+        data = response.json()
 
         for topic in (data['data']['children']):
             for word in topic['data']['title'].split():
