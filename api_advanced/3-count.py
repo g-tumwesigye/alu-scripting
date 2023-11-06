@@ -1,13 +1,15 @@
 #!/usr/bin/python3
-"""Quirry for the reddit api and parse the title of all hot articles
-"""
+
+"""A recursive function that queries the Reddit API,
+parses the title of all hot articles,
+and prints a sorted count of given keywords"""
 
 import json
 import requests
 
 
 def count_words(subreddit, word_list, after="", count=[]):
-    """Function to count words
+    """Function to count_words
     """
 
     if after == "":
@@ -17,7 +19,7 @@ def count_words(subreddit, word_list, after="", count=[]):
     request = requests.get(url,
                            params={'after': after},
                            allow_redirects=False,
-                           headers={'user-agent': 'Celestin25'})
+                           headers={'user-agent': 'bhalut'})
 
     if request.status_code == 200:
         data = request.json()
