@@ -1,47 +1,50 @@
 #!/usr/bin/python3
-
-"""
-Function that queries the Reddit API and prints
-the top ten hot posts of a subreddit
-"""
-
+""""3-count.py"""
 import requests
-import sys
 
 
-def add_title(hot_list, hot_posts):
-    """ Adds item into a list """
-    if len(hot_posts) == 0:
+def count_words(subreddit, word_list, after="", words_count={}):
+    """"count words"""
+    url = "https://www.reddit.com/r/{}/hot.json?limit=100" \
+        .format(subreddit)
+    header = {'User-Agent': 'Mozilla/5.0'}
+    param = {'after': after}
+    response = requests.get(url, headers=header, params=param)
+
+    if response.status_code != 200:
         return
-    hot_list.append(hot_posts[0]['data']['title'])
-    hot_posts.pop(0)
-    add_title(hot_list, hot_posts)
 
+    json_res = response.json()
+    after = json_res.get('data').get('after')
+    has_next = after is not None
+    hot_titles = []
+    words = [word.lower() for word in word_list]
 
-def recurse(subreddit, hot_list=[], after=None):
-    """ Queries to Reddit API """
-    u_agent = 'Mozilla/5.0'
-    headers = {
-        'User-Agent': u_agent
-    }
+    if len(words_count) == 0:
+        words_count = {word: 0 for word in words}
 
-    params = {
-        'after': after
-    }
+    hot_articles = json_res.get('data').get('children')
+    [hot_titles.append(article.get('data').get('title'))
+     for article in hot_articles]
 
-    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    res = requests.get(url,
-                       headers=headers,
-                       params=params,
-                       allow_redirects=False)
+    # loop through all titles
+    for i in range(len(hot_titles)):
+        for title_word in hot_titles[i].lower().split():
+            for word in words:
+                if word.lower() == title_word:
+                    words_count[word] = words_count.get(word) + 1
 
-    if res.status_code != 200:
-        return None
+    if has_next:
+        return count_words(subreddit, word_list, after, words_count)
+    else:
 
-    dic = res.json()
-    hot_posts = dic['data']['children']
-    add_title(hot_list, hot_posts)
-    after = dic['data']['after']
-    if not after:
-        return hot_list
-    return recurse(subreddit, hot_list=hot_list, after=after)
+        words_count = dict(filter(lambda item: item[1] != 0,
+                                  words_count.items()))
+
+        words_count = sorted(words_count.items(),
+                             key=lambda item: item[1],
+                             reverse=True)
+
+        for i in range(len(words_count)):
+            print("{}: {}".format(words_count[i][0],
+                                  words_count[i][1]))
