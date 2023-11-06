@@ -1,15 +1,19 @@
 #!/usr/bin/python3
-""" This module uses recursion to get hot articles"""
+""" 2-recurse.py """
 import requests
 
 
 def recurse(subreddit, hot_list=[], after=None):
-    BASE_URL = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
-    headers = {'User-Agent': 'Didas Junior'}
+    """ returns list with titles of all hot articles in a subreddit """
+    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
+    headers = {'User-Agent': 'Mozilla/5.0'}
     params = {'after': after}
-    response = requests.get(BASE_URL, headers=headers,
-                            params=params,
-                            allow_redirects=False)
+    response = requests.get(
+                                url,
+                                headers=headers,
+                                params=params,
+                                allow_redirects=False
+                            )
     if response.status_code == 200:
         data = response.json().get('data')
         if data is not None:
