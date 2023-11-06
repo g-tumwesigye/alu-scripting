@@ -1,50 +1,72 @@
 #!/usr/bin/python3
-""""3-count.py"""
+
+"""search post function"""
+
+import json
+import operator
 import requests
 
 
-def count_words(subreddit, word_list, after="", words_count={}):
-    """"count words"""
-    url = "https://www.reddit.com/r/{}/hot.json?limit=100" \
-        .format(subreddit)
-    header = {'User-Agent': 'Mozilla/5.0'}
-    param = {'after': after}
-    response = requests.get(url, headers=header, params=param)
+def count_words(subreddit, word_list, after=None):
+    """get all the keyword count"""
 
-    if response.status_code != 200:
+    if len(word_list) == 0:
+        print(None)
         return
-
-    json_res = response.json()
-    after = json_res.get('data').get('after')
-    has_next = after is not None
-    hot_titles = []
-    words = [word.lower() for word in word_list]
-
-    if len(words_count) == 0:
-        words_count = {word: 0 for word in words}
-
-    hot_articles = json_res.get('data').get('children')
-    [hot_titles.append(article.get('data').get('title'))
-     for article in hot_articles]
-
-    # loop through all titles
-    for i in range(len(hot_titles)):
-        for title_word in hot_titles[i].lower().split():
-            for word in words:
-                if word.lower() == title_word:
-                    words_count[word] = words_count.get(word) + 1
-
-    if has_next:
-        return count_words(subreddit, word_list, after, words_count)
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
+    headers = {"User-Agent": "Mozilla/5.0"}
+    result = requests.get(url,
+                          headers=headers,
+                          params={"after": after},
+                          allow_redirects=False)
+    if result.status_code != 200:
+        return None
+    body = json.loads(result.text)
+    if body["data"]["after"] is not None:
+        newlist = word_list
+        if type(word_list[0]) is str:
+            temp = []
+            for i in word_list:
+                if not any(j['key'].lower() == i.lower() for j in temp):
+                    temp.append({"key": i.lower(), "count": 0, "times": 1})
+                else:
+                    item = list(filter(
+                                lambda search: search['key'] == i.lower(),
+                                temp))
+                    if len(item) > 0:
+                        item[0]["times"] = item[0]["times"] + 1
+            newlist = temp
+        for i in newlist:
+            for j in body["data"]["children"]:
+                for k in j["data"]["title"].lower().split():
+                    if i["key"] == k:
+                        i["count"] = i["count"] + 1
+        return count_words(subreddit, newlist, body["data"]["after"])
     else:
-
-        words_count = dict(filter(lambda item: item[1] != 0,
-                                  words_count.items()))
-
-        words_count = sorted(words_count.items(),
-                             key=lambda item: item[1],
-                             reverse=True)
-
-        for i in range(len(words_count)):
-            print("{}: {}".format(words_count[i][0],
-                                  words_count[i][1]))
+        newlist = word_list
+        if type(word_list[0]) is str:
+            temp = []
+            for i in word_list:
+                if not any(j['key'].lower() == i.lower() for j in temp):
+                    temp.append({"key": i.lower(), "count": 0, "times": 1})
+                else:
+                    item = list(filter(
+                                lambda search: search['key'] == i.lower(),
+                                temp))
+                    if len(item) > 0:
+                        item[0]["times"] = item[0]["times"] + 1
+            newlist = temp
+        for i in newlist:
+            for j in body["data"]["children"]:
+                for k in j["data"]["title"].lower().split():
+                    if i["key"] == k:
+                        i["count"] = i["count"] + 1
+        key = operator.itemgetter("key")
+        sorted_list = sorted(word_list, key=key)
+        key = operator.itemgetter("count")
+        sorted_list = sorted(sorted_list, key=key, reverse=True)
+        word_list = sorted_list
+        for i in sorted_list:
+            if i["count"] > 0:
+                print("{}: {}".format(i["key"], i["count"] * i["times"]))
+        return
