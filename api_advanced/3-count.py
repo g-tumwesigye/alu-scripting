@@ -1,15 +1,13 @@
 #!/usr/bin/python3
-""" Queries the Reddit API, parses the title of all hot articles,
-and prints a sorted count of given keywords
-(case-insensitive, delimited by spaces).
-"""
+"""A script that counts the number of occurrences of list of words
+in a given subreddit."""
 
 import json
 import requests
 
 
 def count_words(subreddit, word_list, after="", count=[]):
-    """Function to count_words
+    """Function to count words
     """
 
     if after == "":
